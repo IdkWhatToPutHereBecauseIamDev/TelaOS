@@ -8,45 +8,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install ISO Boot Tools
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xorriso isolinux syslinux-common mtools grub-pc-bin
+          sudo apt-get install -y xorriso mtools grub-pc-bin grub-common wget
 
-      - name: Create Boot Structure
+      - name: Prepare ISO Files
         run: |
-          mkdir -p iso_root/isolinux
+          mkdir -p iso_root/boot/grub
           mkdir -p iso_root/casper
-          # Copying the essential bootloader files UTM looks for
-          cp /usr/lib/ISOLINUX/isolinux.bin iso_root/isolinux/
-          cp /usr/lib/syslinux/modules/bios/* iso_root/isolinux/
-
-      - name: Inject Linux Kernel (The Engine)
-        run: |
-          # UTM needs an actual kernel file to recognize the format
+          # Injecting a real minimal kernel so UTM recognizes the boot format
           wget http://ubuntu.com -O iso_root/casper/vmlinuz
           wget http://ubuntu.com -O iso_root/casper/initrd.gz
+          # Copy your Web OS files
+          cp index.html styles.css app.js drivers.js apphandler.js apps.json iso_root/
 
-      - name: Create Isolinux Config
+      - name: Configure GRUB
         run: |
-          cat <<EOF > iso_root/isolinux/isolinux.cfg
-          default telaos
-          label telaos
-            kernel /casper/vmlinuz
-            append initrd=/casper/initrd.gz quiet splash
+          cat <<EOF > iso_root/boot/grub/grub.cfg
+          set timeout=0
+          menuentry "TelaOS" {
+              linux /casper/vmlinuz quiet splash
+              initrd /casper/initrd.gz
+          }
           EOF
 
-      - name: Build Hybrid ISO (UTM Compatible)
-        run: |
-          xorrisofs -o TelaOS-UTM.iso \
-            -b isolinux/isolinux.bin -c isolinux/boot.cat \
-            -no-emul-boot -boot-load-size 4 -boot-info-table \
-            -eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot \
-            -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-            -J -R -V "TELAOS" iso_root
+      - name: Build Hybrid ISO
+        run: grub-mkrescue -o TelaOS-Final.iso iso_root
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: TelaOS-UTM-Ready
-          path: TelaOS-UTM.iso
+          path: TelaOS-Final.iso
