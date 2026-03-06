@@ -11,36 +11,37 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xorriso mtools grub-pc-bin grub-common wget binutils
+          # mtools and grub-pc-bin are mandatory for a valid hybrid ISO
+          sudo apt-get install -y xorriso mtools grub-pc-bin grub-common wget
 
-      - name: Prepare ISO Structure
+      - name: Prepare ISO root
         run: |
           mkdir -p iso_root/boot/grub
           mkdir -p iso_root/casper
-          # Pulling the real kernel engine (vmlinuz) and initrd for x86_64
+          # Download a real kernel so UTM detects a bootable OS
           wget -q https://ubuntu.com -O iso_root/casper/vmlinuz
           wget -q https://ubuntu.com -O iso_root/casper/initrd.gz
-          # Copy your Web OS files into the root
+          # Copy your TelaOS web files
           cp index.html styles.css app.js drivers.js apphandler.js apps.json iso_root/
 
-      - name: Configure GRUB
+      - name: Create GRUB config
         run: |
           cat <<EOF > iso_root/boot/grub/grub.cfg
           set timeout=0
           set default=0
           menuentry "TelaOS" {
-              linux /casper/vmlinuz quiet splash dwc_otg.lpm_enable=0 root=/dev/ram0
+              linux /casper/vmlinuz quiet splash
               initrd /casper/initrd.gz
           }
           EOF
 
-      - name: Create Hybrid ISO
+      - name: Build Hybrid ISO
         run: |
-          # grub-mkrescue is the safest way to avoid exit code 32 on GitHub
-          grub-mkrescue -o TelaOS-UTM.iso iso_root -- -volid "TELAOS"
+          # Use -d to point to the installed BIOS modules, preventing error 32
+          grub-mkrescue -d /usr/lib/grub/i386-pc -o TelaOS-Final.iso iso_root
 
-      - name: Upload Artifact
+      - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
-          name: TelaOS-Package
-          path: TelaOS-UTM.iso
+          name: TelaOS-UTM-Ready
+          path: TelaOS-Final.iso
