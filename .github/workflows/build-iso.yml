@@ -1,0 +1,62 @@
+name: Build TelaOS Bootable ISO
+on: 
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install ISO Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y genisoimage squashfs-tools xorriso
+
+      - name: Create ISO Structure
+        run: |
+          mkdir -p iso_root/boot/grub
+          mkdir -p iso_root/casper
+          mkdir -p iso_root/scripts
+
+      - name: Generate TelaOS Kiosk Script
+        run: |
+          cat <<EOF > iso_root/scripts/telaos-boot.sh
+          #!/bin/bash
+          # TelaOS Auto-Launch Script
+          # Replace 'YOUR_USERNAME' with your actual GitHub username below
+          chromium-browser \\
+            --kiosk \\
+            --no-first-run \\
+            --noerrdialogs \\
+            --disable-infobars \\
+            --enable-features=OverlayScrollbar \\
+            --autoplay-policy=no-user-gesture-required \\
+            "https://${{ github.repository_owner }}.github.io/TelaOS/"
+          EOF
+          chmod +x iso_root/scripts/telaos-boot.sh
+
+      - name: Configure Bootloader
+        run: |
+          cat <<EOF > iso_root/boot/grub/grub.cfg
+          set timeout=0
+          set default=0
+          menuentry "TelaOS Liquid Glass" {
+              linux /casper/vmlinuz boot=casper quiet splash ---
+              initrd /casper/initrd.gz
+          }
+          EOF
+
+      - name: Build Final ISO
+        run: |
+          # This creates the bootable image header
+          grub-mkrescue -o TelaOS-Installer.iso iso_root
+
+      - name: Upload TelaOS ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: TelaOS-Bootable-ISO
+          path: TelaOS-Installer.iso
