@@ -14,30 +14,27 @@ jobs:
       - name: Install ISO Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y genisoimage squashfs-tools xorriso
+          # mtools and grub-pc-bin are REQUIRED for grub-mkrescue to work on headless runners
+          sudo apt-get install -y genisoimage squashfs-tools xorriso mtools grub-pc-bin grub-common
 
       - name: Create ISO Structure
         run: |
           mkdir -p iso_root/boot/grub
           mkdir -p iso_root/casper
-          mkdir -p iso_root/scripts
 
       - name: Generate TelaOS Kiosk Script
         run: |
-          cat <<EOF > iso_root/scripts/telaos-boot.sh
+          mkdir -p iso_root/usr/bin
+          cat <<EOF > iso_root/usr/bin/telaos-boot
           #!/bin/bash
-          # TelaOS Auto-Launch Script
-          # Replace 'YOUR_USERNAME' with your actual GitHub username below
           chromium-browser \\
             --kiosk \\
             --no-first-run \\
             --noerrdialogs \\
             --disable-infobars \\
-            --enable-features=OverlayScrollbar \\
-            --autoplay-policy=no-user-gesture-required \\
             "https://${{ github.repository_owner }}.github.io/TelaOS/"
           EOF
-          chmod +x iso_root/scripts/telaos-boot.sh
+          chmod +x iso_root/usr/bin/telaos-boot
 
       - name: Configure Bootloader
         run: |
@@ -52,7 +49,7 @@ jobs:
 
       - name: Build Final ISO
         run: |
-          # This creates the bootable image header
+          # Added -d to explicitly point to the BIOS modules installed via grub-pc-bin
           grub-mkrescue -o TelaOS-Installer.iso iso_root
 
       - name: Upload TelaOS ISO
