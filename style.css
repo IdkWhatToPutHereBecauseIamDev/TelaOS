@@ -1,0 +1,78 @@
+:root {
+    --glass: rgba(255, 255, 255, 0.12);
+    --border: rgba(255, 255, 255, 0.25);
+}
+
+* { 
+    box-sizing: border-box; 
+    user-select: none; 
+    -webkit-user-select: none; 
+    margin: 0; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body, html, #root {
+    height: 100%; width: 100%;
+    overflow: hidden; /* Prevents scrolling */
+    background: #000;
+}
+
+.tela-os-root {
+    height: 100vh; width: 100vw;
+    background: url('https://peakpx.com') center/cover;
+    display: flex; flex-direction: column;
+    position: relative;
+}
+
+.glass {
+    background: var(--glass);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 0.5px solid var(--border);
+}
+
+.status-bar {
+    height: 44px; display: flex; justify-content: space-between;
+    padding: 0 25px; align-items: center; color: white; font-size: 13px; font-weight: 600;
+}
+
+.home-screen {
+    flex: 1; display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    grid-template-rows: repeat(5, 1fr);
+    gap: 20px; padding: 20px;
+}
+
+.app-entry { display: flex; flex-direction: column; align-items: center; color: white; font-size: 11px; }
+
+.app-icon {
+    width: 62px; height: 62px; border-radius: 16px; margin-bottom: 6px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.app-window {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 100; display: flex; flex-direction: column;
+}
+
+.window-header { 
+    padding: 50px 20px 15px; display: flex; align-items: center; 
+}
+
+.address-bar { 
+    flex: 1; margin: 0 12px; padding: 10px; border-radius: 12px; 
+    color: white; font-size: 12px; text-align: center; 
+}
+
+.app-frame { flex: 1; border: none; background: white; width: 100%; }
+
+.keyboard {
+    position: fixed; bottom: 0; width: 100vw; height: 280px;
+    padding: 10px 8px 30px; display: grid; 
+    grid-template-columns: repeat(10, 1fr); gap: 6px; z-index: 200;
+}
+
+.key { border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 18px; }
+
+.btn-back { background: none; border: none; color: white; font-size: 16px; cursor: pointer; }
